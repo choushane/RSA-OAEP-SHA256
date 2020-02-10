@@ -18,6 +18,12 @@
 
 #define MAX_STRING 4096
 
+//#define PRIVATE_KEY "private.pem"
+#define PRIVATE_KEY "pkcs1.pem"
+#define PUBLIC_KEY "public.pem"
+//#define STRING "encr.txt"
+#define STRING "15c8133a-6e36-4bb1-927f-fbb3c726f0b50000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+
 static const char *codes =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -116,24 +122,14 @@ int base64_encode(const unsigned char *in,  unsigned long inlen,
     return 1;
 }
 
-EVP_PKEY *generatePriEVPKEY(char *keyChar) {
-    const char * private_header = "-----BEGIN PRIVATE KEY-----\n";
-    const char * private_footer = "\n-----END PRIVATE KEY-----";
+EVP_PKEY *generatePriEVPKEY() {
     char private_key[4096] = {0};
     int ret, flen, bio_len;
     BIO *bio = NULL;
     RSA *r = NULL;
 
-    if(strstr(keyChar, private_header) == NULL){
-        strcpy(private_key, private_header);
-    	strcat(private_key, keyChar);
-    	strcat(private_key, private_footer);
-    } else {
-	strcpy(private_key, keyChar);
-    }
-
-    if ((bio = BIO_new_mem_buf((void *)private_key, strlen(private_key))) == NULL){
-        _ERROR_MSG("Get memory buffer fail.");
+    if ((bio = BIO_new_file(PRIVATE_KEY, "r")) == NULL){
+        _ERROR_MSG("Get private key file fail.");
 	ERR_print_errors_fp(stdout);
 	return NULL;
     }
@@ -340,31 +336,20 @@ int encode_oaep_rsa_sha256(EVP_PKEY *rkey, char *str, unsigned char *result, int
 }
 
 void main(void){
-    char *private_key = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCK79wWp2EZ2z9jdGeGrKyqorR/al/URipkJaoxAu3KJ5jlLP5h9dxKlAmjgHFh87AuQi6225jWGfBuLqPxTh9ZZrgvtCjA26Ne43OsnKr8BT10YLC4sobbcwlnz1gc1l91pQ2z1FGLONqoxT5qXZk0sD5+6MWj6JH6FEXAXASLug79aI4LHqGgtUDQChKcaarVu3NT6adv+mMohDgfo1HSfOaHLMaiC/VHPuq1Rwpm4onZpTNuzagVKe/jbxC+CA6u0q6zIiGzdcb341RfoEqcbYlRmES988NeP+TU26twO6HvGzVuvdjGfJABeJmP5VIAmfahdp5VSxwUZyGiXcUXAgMBAAECggEAasvFGYS/luh46THpAhRpBSDcLbTOxJTKsQBiuhnOPr4BQOg9AX/DPXBdmFh6zxhKLMSis9xItwppTch8LFgosMfMfJ63VMd/5MhheiVTKTW9718DeHWCQ91BNZKj4EbISd39kmV56NJjAafcOlaIFYAECflTMpLq4pgCpcIVnHDceynQxYrs4WI+tn+53HY+LbT2EOoit6nkE0CIdNbYLV/54Ry1N78P0LZ8jbo4kVASRFjbk+kki3YkjHQ6vazBgBwQsRuEu9WXu1fzVvc5KwXYXBN+ge+HfMOk446xkXUc1LLRkK2ITeqMBxmZQ3Px+rU/d1OdgH4z4u/s/TDIwQKBgQDT8HcMxJl7MyNgIfJNl0NfHMtFxmG4TUzzKBRNlnZ3xfkWr7AtI4iBMzfrER3mPDVz3AY/RdqPk5X4+iUXnokrowuZZ2DCVV2rI2FFLwwKVherEsxas+s6QF56WqL4rUh34L7bUdjOPg3IMym47feO1OslRRY9rLIS/Z81j+4fzQKBgQCn0ip7dxVMQVepBUN4nARgb59g815yw87BSLzbGb7Q1u6IfOqJiPsFF9uDLVWgL1kd2u1LgHRK70pMhBi0SSDRLI6xDoydPyT6XevOzIQR6t5JZnSdyOpIFrWfdDoiw2dc58gYPDP8nJUwXD6IWK8WJyIvAUuUJYzbjOclH+dscwKBgQCUj8OzpH/9lxwd/82sS/LC0hk/AM9w9GaTL64DsQu7638uQtrY2UaPYkq5MNdnkx7Y5wtOAPYynH6M9zNW+h8nAnRYBNoTfulY1EUTzOXAvRZ8KYIrtmCWBZb0Z2JDtJvOxDCk5ht2fpMEmbCOW+ijK2blSidL9ikhHL0kO47spQKBgB//oroH6revfddseYD1vp/kqK8DuG6Jh1KzW88rCYcodDLyHoY66CIAeop4imsQnB1lMPnEdGgVWEVeqpc1mlxH8q0v6P/SmmpiniPAOy5vahL0xiePt5wnOFo+/xbBy2ObjjuQvxjbglbGP+YfgsLmk04DITYOMt1p8GjTvHyhAoGAUXa7x8wsJ3MfVvwbBAV2bQbw4S6L2bRd5cus2Ro1+Dx8UeLjXX79UglhE1pGrpnf0iZZuRGszDtVwoueaTq7w/ZgtT18j+y/DkVdveN+rPuzfhVfaJAc2fSEzN3g4tKLaQxnkxREZgm/8wJFi1KMNC8avxesqJOGEP7HXznvCF4=";
     int len;
     EVP_PKEY *rkey;
     unsigned char result[4096] = {0};
-    char *str = "7172d167-e88b-4deb-a42f-abc09d258f5a";
-/*
-    base64_encode(test, strlen(test), result, (long unsigned int *)&len);
-    printf("base64 encode[%d]: %s\n", len, result);
-    len = 4096;
-    base64_decode((const unsigned char *)&result, strlen(result), (unsigned char *)&result, (long unsigned int *)&len);
 
-    for(int x = 0;x < len;x++){
-        printf("0x%02x ", result[x]);
-    }
-    printf("\n");
-*/
     OpenSSL_add_all_ciphers(); 
     OpenSSL_add_all_algorithms();
     ERR_load_crypto_strings();
-    if((rkey = generatePriEVPKEY(private_key)) == NULL){
+
+    if((rkey = generatePriEVPKEY()) == NULL){
 	_ERROR_MSG("generatePriEVPKEY fail.");
         return;
     }
 
-    if(!encode_oaep_rsa_sha256(rkey ,str, (unsigned char *)&result, (int *)&len)){
+    if(!encode_oaep_rsa_sha256(rkey , STRING, (unsigned char *)&result, (int *)&len)){
 	_ERROR_MSG("Encode fail.");
 	return;
     }
